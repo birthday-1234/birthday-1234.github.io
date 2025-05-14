@@ -1,0 +1,82 @@
+<!-- داخل <script> -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const surpriseButton = document.getElementById('surpriseButton');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultText = document.getElementById('resultText');
+        const modal = document.getElementById('modal');
+        const modalResult = document.getElementById('modalResult');
+        const closeModal = document.getElementById('closeModal');
+
+        const surprises = [
+            "الأولى ربحت جنيه",
+            "الثانية عايدني بجنيه",
+            "الثالثة حظ اوفر",
+            "الرابعة لك قطعة كيك زيادة",
+            "الخامسة اغسل صحون الكيك",
+            "السادسة قل ابيخ نكتة عندك"
+        ];
+
+        // تحقق من إذا كان المستخدم استخدم الزر من قبل
+        const hasUsed = localStorage.getItem('hasUsedSurprise');
+
+        if (hasUsed === 'true') {
+            surpriseButton.disabled = true;
+            surpriseButton.textContent = "لقد حصلت على مفاجأتك 🎉";
+        }
+
+        surpriseButton.addEventListener('click', function() {
+            // إذا كان المستخدم استخدمه مسبقًا، لا تفعل شيئًا
+            if (localStorage.getItem('hasUsedSurprise') === 'true') return;
+
+            // احفظ أنه استخدم المفاجأة
+            localStorage.setItem('hasUsedSurprise', 'true');
+            surpriseButton.disabled = true;
+            surpriseButton.textContent = "لقد حصلت على مفاجأتك 🎉";
+
+            // اختر مفاجأة عشوائية
+            const randomIndex = Math.floor(Math.random() * surprises.length);
+            const surprise = surprises[randomIndex];
+
+            // عرض النتيجة
+            resultText.textContent = surprise;
+            resultContainer.classList.remove('hidden');
+            resultContainer.classList.add('animate__animated', 'animate__fadeIn');
+
+            // عرض النافذة المنبثقة
+            modalResult.textContent = surprise;
+            modal.classList.remove('hidden');
+
+            // تأثير احتفالات
+            createConfetti();
+        });
+
+        closeModal.addEventListener('click', function() {
+            modal.classList.add('hidden');
+        });
+
+        function createConfetti() {
+            const colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444'];
+
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.opacity = '0.8';
+
+                document.body.appendChild(confetti);
+
+                const animationDuration = Math.random() * 3 + 2;
+
+                confetti.style.transition = `all ${animationDuration}s ease-out`;
+                confetti.style.transform = `translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 + 100}px) rotate(${Math.random() * 360}deg)`;
+                confetti.style.opacity = '0';
+
+                setTimeout(() => {
+                    confetti.remove();
+                }, animationDuration * 1000);
+            }
+        }
+    });
+</script>
