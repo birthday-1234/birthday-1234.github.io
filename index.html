@@ -1,82 +1,173 @@
-<!-- داخل <script> -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const surpriseButton = document.getElementById('surpriseButton');
-        const resultContainer = document.getElementById('resultContainer');
-        const resultText = document.getElementById('resultText');
-        const modal = document.getElementById('modal');
-        const modalResult = document.getElementById('modalResult');
-        const closeModal = document.getElementById('closeModal');
-
-        const surprises = [
-            "الأولى ربحت جنيه",
-            "الثانية عايدني بجنيه",
-            "الثالثة حظ اوفر",
-            "الرابعة لك قطعة كيك زيادة",
-            "الخامسة اغسل صحون الكيك",
-            "السادسة قل ابيخ نكتة عندك"
-        ];
-
-        // تحقق من إذا كان المستخدم استخدم الزر من قبل
-        const hasUsed = localStorage.getItem('hasUsedSurprise');
-
-        if (hasUsed === 'true') {
-            surpriseButton.disabled = true;
-            surpriseButton.textContent = "لقد حصلت على مفاجأتك 🎉";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مفاجأة عيد الميلاد</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
         }
+        .birthday-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .surprise-button {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .surprise-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .surprise-button:active {
+            transform: translateY(0);
+        }
+        .modal-overlay {
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f59e0b;
+            opacity: 0;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="birthday-card max-w-2xl w-full p-8 md:p-12 relative overflow-hidden">
+        <div class="absolute -top-10 -left-10 w-20 h-20 rounded-full bg-blue-500/10 blur-xl"></div>
+        <div class="absolute -bottom-10 -right-10 w-24 h-24 rounded-full bg-yellow-500/10 blur-xl"></div>
+        <div class="text-center space-y-8">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600 mb-2 floating">
+                    🎉 عيد ميلاد سعيد! 🎉
+                </h1>
+                <p class="text-lg text-slate-300">اضغط على الزر لتحصل على مفاجأتك العشوائية!</p>
+            </div>
+            <div class="pt-4">
+                <button id="surpriseButton" class="surprise-button px-8 py-4 rounded-full text-white font-semibold text-lg">
+                    احصل على مفاجأتي
+                </button>
+            </div>
+            <div id="resultContainer" class="hidden pt-8">
+                <div class="inline-block px-6 py-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+                    <p id="resultText" class="text-xl font-medium text-yellow-400"></p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        surpriseButton.addEventListener('click', function() {
-            // إذا كان المستخدم استخدمه مسبقًا، لا تفعل شيئًا
-            if (localStorage.getItem('hasUsedSurprise') === 'true') return;
+    <!-- نافذة منبثقة -->
+    <div id="modal" class="fixed inset-0 flex items-center justify-center p-4 z-50 hidden modal-overlay">
+        <div class="modal-content rounded-2xl p-8 max-w-md w-full relative animate__animated animate__zoomIn">
+            <div class="text-center space-y-6">
+                <div class="text-6xl">🎁</div>
+                <h3 class="text-2xl font-bold">مفاجأتك!</h3>
+                <p id="modalResult" class="text-3xl font-bold text-yellow-400"></p>
+                <button id="closeModal" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-full text-white font-medium transition-colors">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
 
-            // احفظ أنه استخدم المفاجأة
-            localStorage.setItem('hasUsedSurprise', 'true');
-            surpriseButton.disabled = true;
-            surpriseButton.textContent = "لقد حصلت على مفاجأتك 🎉";
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const surpriseButton = document.getElementById('surpriseButton');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultText = document.getElementById('resultText');
+            const modal = document.getElementById('modal');
+            const modalResult = document.getElementById('modalResult');
+            const closeModal = document.getElementById('closeModal');
 
-            // اختر مفاجأة عشوائية
-            const randomIndex = Math.floor(Math.random() * surprises.length);
-            const surprise = surprises[randomIndex];
+            const surprises = [
+                "الأولى ربحت جنيه",
+                "الثانية عايدني بجنيه",
+                "الثالثة حظ اوفر",
+                "الرابعة لك قطعة كيك زيادة",
+                "الخامسة اغسل صحون الكيك",
+                "السادسة قل ابيخ نكتة عندك"
+            ];
 
-            // عرض النتيجة
-            resultText.textContent = surprise;
-            resultContainer.classList.remove('hidden');
-            resultContainer.classList.add('animate__animated', 'animate__fadeIn');
+            // تحقق إذا كان سبق له استخدام الزر
+            const hasUsed = localStorage.getItem('hasUsedSurprise');
 
-            // عرض النافذة المنبثقة
-            modalResult.textContent = surprise;
-            modal.classList.remove('hidden');
-
-            // تأثير احتفالات
-            createConfetti();
-        });
-
-        closeModal.addEventListener('click', function() {
-            modal.classList.add('hidden');
-        });
-
-        function createConfetti() {
-            const colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444'];
-
-            for (let i = 0; i < 50; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.opacity = '0.8';
-
-                document.body.appendChild(confetti);
-
-                const animationDuration = Math.random() * 3 + 2;
-
-                confetti.style.transition = `all ${animationDuration}s ease-out`;
-                confetti.style.transform = `translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 + 100}px) rotate(${Math.random() * 360}deg)`;
-                confetti.style.opacity = '0';
-
-                setTimeout(() => {
-                    confetti.remove();
-                }, animationDuration * 1000);
+            if (hasUsed === 'true') {
+                surpriseButton.disabled = true;
+                surpriseButton.textContent = "لقد حصلت على مفاجأتك 🎉";
             }
-        }
-    });
-</script>
+
+            surpriseButton.addEventListener('click', function() {
+                if (localStorage.getItem('hasUsedSurprise') === 'true') return;
+
+                localStorage.setItem('hasUsedSurprise', 'true');
+                surpriseButton.disabled = true;
+                surpriseButton.textContent = "لقد حصلت على مفاجأتك 🎉";
+
+                const randomIndex = Math.floor(Math.random() * surprises.length);
+                const surprise = surprises[randomIndex];
+
+                resultText.textContent = surprise;
+                resultContainer.classList.remove('hidden');
+                resultContainer.classList.add('animate__animated', 'animate__fadeIn');
+
+                modalResult.textContent = surprise;
+                modal.classList.remove('hidden');
+
+                createConfetti();
+            });
+
+            closeModal.addEventListener('click', function() {
+                modal.classList.add('hidden');
+            });
+
+            function createConfetti() {
+                const colors = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444'];
+
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.opacity = '0.8';
+
+                    document.body.appendChild(confetti);
+
+                    const animationDuration = Math.random() * 3 + 2;
+                    confetti.style.transition = `all ${animationDuration}s ease-out`;
+                    confetti.style.transform = `translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 + 100}px) rotate(${Math.random() * 360}deg)`;
+                    confetti.style.opacity = '0';
+
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, animationDuration * 1000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
